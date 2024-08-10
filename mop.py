@@ -1,22 +1,11 @@
-import math
-import sys
-import itertools
-
-import clingo
-
-import numpy
-
-import time
-
 import numpy as np
-
-import argparse
-
+import random
+import sys
+import time
 
 from argparser import parse_args
 from prolog_interface import PrologInterface
 from mixture import MixtureGenerator, OptMixture
-
 
 
 def generate_term(
@@ -38,13 +27,17 @@ def generate_term(
     return [term + (" : 0.5" if with_prob else "")]
 
 
-
 def main():
-
+    """
+    Main method.
+    """
     args = parse_args()
     print(args)
 
-    bg = "datasets/" + args.dataset + ".pl"
+    if args.dataset:
+        bg = "datasets/" + args.dataset + ".pl"
+    else:
+        bg = args.filename
     print(f"Dataset: {bg}")
 
     train_set = list(map(int, args.train))
@@ -79,7 +72,6 @@ def main():
     mxt_model = MixtureGenerator(
         possible_atoms,
         list(generate_term(target, with_prob=True)),
-        args.prob_rules,
         n_rules_each_program=args.nr,
         max_atoms_in_body=args.nba,
         verbosity=args.verbosity
@@ -87,6 +79,14 @@ def main():
     end_time = time.time()
     print(f"Generated mixtures in {end_time - start_time} s")
     print(f"Total number of mixtures: {len(mxt_model.programs):_}")
+
+    if args.nm != -1:
+        # sample args.nm mixtures from the generated
+        ns = min(int(args.nm), len(mxt_model.programs))
+        mxt_model.programs = random.sample(mxt_model.programs, ns)
+        print(f"Considering {len(mxt_model.programs)} random programs")
+    else:
+        print("Considering all mixtures")
 
     start_time = time.time()
     learned_programs, probabilities_examples_train, probabilities_examples_test = prolog_interface.compute_parameters_mixtures(

@@ -167,6 +167,8 @@ list_to_conj([H|T], ','(H, Conj)) :-
 extract_terms(CL,[H,P,Name,Arities]):-
     CL = (H:P ; _ :- Body),
     Body =.. [_|AtomsBody],
+    % writeln(Body),
+    % writeln((AtomsBody,Name,Arities)),
     maplist(functor,AtomsBody,Name,Arities).
 
 extract_terms_list(Body,L):-
@@ -178,7 +180,7 @@ reconstruct_term(Name,Arity,Term):-
     functor(Term,Name,Arity).
 
 reconstruct_clause([H,P,Names,Arities], CL):-
-    P1 is 1 - P,
+    % P1 is 1 - P,
     maplist(reconstruct_term,Names,Arities,Terms),
     list_to_conj(Terms,B),
     % CL = (H:P ; :P1 :- B).
@@ -237,7 +239,9 @@ compute_probability_examples(LearnedPrograms,Folds,LProbs):-
 train(TrainingFolds,TestFolds,LearnedPrograms,LProbsFinalTrain,LProbsFinalTest):-
   % writeln(TrainingFolds),
   % findall(P,induce_par_lift(TrainingFolds,P),LP),
+  writeln("Learning parameters"),
   findall(P,(induce_par_lift(TrainingFolds,P), P \= []), LPInit),
+  writeln("Terminated learning"),
   % writeln("---"),
   % maplist(writeln,LPInit),
   % writeln("Removing duplicates and empty lists"),
@@ -261,9 +265,11 @@ train(TrainingFolds,TestFolds,LearnedPrograms,LProbsFinalTrain,LProbsFinalTest):
   % findall(I,fold(I,_),Folds),
   % writeln(Folds),
   %%%%%%
+  writeln("Computation probability training set"),
   compute_probability_examples(LP,TrainingFolds,LProbsFinalTrain),
   % halt,
   % so I don't have to call it another time
+  writeln("Computation probability test set"),
   compute_probability_examples(LP,TestFolds,LProbsFinalTest).
 
   % get_prob_loop(LP,TrainingFolds,[],_,[],Ps),

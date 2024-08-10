@@ -1,16 +1,14 @@
 import itertools
 import math
+import numpy as np
 import time
+import sklearn.metrics
+import sys
+
+from scipy.optimize import minimize
 
 from data_structures import Program, Clause
 
-import numpy as np
-
-import sys
-
-import sklearn.metrics
-
-from scipy.optimize import minimize
 
 def my_log(v : float):
     try:
@@ -167,7 +165,6 @@ class MixtureGenerator():
             possible_atoms : 'list[str]',
             target : 'list[str]',
             # examples : 'list[Example]',
-            prob_rules : bool,
             # device : torch.device,
             n_rules_each_program : int = 2,
             max_atoms_in_body : int = 3,
@@ -177,7 +174,6 @@ class MixtureGenerator():
         
         self.possible_atoms = possible_atoms
         self.target = target # the head of the relation, list to handle arity > 1
-        self.prob_rules = prob_rules # True if probabilities are also associated with rules, False otherwise
         # self.examples = examples
         self.n_rules_each_program = n_rules_each_program
         self.max_atoms_in_body = max_atoms_in_body
