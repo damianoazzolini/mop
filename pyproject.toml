@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mop"
+version = "0.0.1"
+dependencies = []
+requires-python = ">=3.8"
+authors = [
+  {name = "Damiano Azzolini", email = "damiano.azzolini@unife.it"}
+]
+maintainers = [
+  {name = "Damiano Azzolini", email = "damiano.azzolini@unife.it"}
+]
+description = "Python interface for the cplint interpreter."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["metrics"]
+
+[project.scripts]
+mop = "mop:main"
