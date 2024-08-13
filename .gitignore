@@ -14,6 +14,7 @@ l.pl
 lift.pl
 p.pl
 run.sh
+helper.pl
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
