@@ -28,7 +28,7 @@ class PrologInterface:
         f.close()
 
 
-    def get_modeb_target_and_pos_or_neg_list(self) -> 'tuple[list[tuple[str,int]], tuple[str,int], list[float], list[float]]':
+    def get_modeb_target_and_pos_or_neg_list(self) -> 'tuple[list[str], tuple[str,int], list[float], list[float]]':
         """
         Gets the modeb, target, and a list identifying positive 
         and negative examples, from file.
@@ -36,21 +36,24 @@ class PrologInterface:
         
         janus.consult("bg", self.lines_bg + self.lines_helper)
 
-        res = janus.query_once("get_modeb(L)")
+        res = janus.query_once("generate_atoms(body,L)")
         if res["truth"]:
             modeb = res["L"]
         else:
-            print("Error in querying background file (modeb)")
+            print("Error in querying background file (generate_body_atoms(body,L))")
             sys.exit()
 
-        res = janus.query_once("get_output_predicates(L)")
+        res = janus.query_once("generate_atoms(head,L)")
         if res["truth"]:
             target_predicate = res["L"]
         else:
-            print("Error in querying background file (target)")
+            print("Error in querying background file (generate_body_atoms(head,L))")
             sys.exit()
+        
+        # print(target_predicate)
 
-        res = janus.query_once(f"get_01({target_predicate[0][0]}, {target_predicate[0][1]}, {self.train_set}, {self.test_set}, L01Train, L01Test)")
+        # res = janus.query_once(f"get_01({target_predicate[0][0]}, {target_predicate[0][1]}, {self.train_set}, {self.test_set}, L01Train, L01Test)")
+        res = janus.query_once(f"get_01({target_predicate}, {self.train_set}, {self.test_set}, L01Train, L01Test)")
         if res["truth"]:
             l01_train = res["L01Train"]
             l01_test = res["L01Test"]
@@ -60,84 +63,6 @@ class PrologInterface:
 
         return modeb, target_predicate, l01_train, l01_test
 
-    def find_examples_matrices(self,
-            head : str,
-            new_rules : 'list[str]',
-            n_mixtures : int
-        ) -> 'list[list[str]]':
-        to_assert = f"""
-
-        find_ids_examples_true(IdMixture, LID):-
-            findall(Id,{head}_(IdMixture,Id),LIDD),
-            sort(LIDD, LID).
-
-        """
-
-        lines = '\n'.join(new_rules) + "\n"
-
-        # print(lines)
-
-        janus.consult("bg", self.lines_bg + to_assert + lines + self.lines_helper)
-        
-        # print(self.lines_bg + to_assert + lines + self.lines_helper)
-
-        # print("HERE")
-
-        res = janus.query_once(f"get_examples_matrices({n_mixtures}, L)")
-        if res["truth"]:
-            examples_matrices = res["L"]
-        else:
-            print("Error in querying background file (modeb)")
-            sys.exit()
-        
-        # print("RETURN")
-        # print(len(examples_matrices))
-        # for e in examples_matrices:
-        #     print(len(e))
-        
-        return examples_matrices
-    
-
-    def find_examples_matrices_prob_rules(self,
-            head : str,
-            new_rules : 'list[str]',
-            n_mixtures : int,
-            n_rules : int,
-        ) -> 'list[list[str]]':
-        # unifies with a list with one element, not with the element itself,
-        # to avoid transpose operations in Python. To debug, remove the list
-        to_assert = f"""
-
-        get_list_example_fixed_index_rule_fixed_index_mixture_fixed(IDExample, IdxRule, IdxMixture, Models):-
-            ( {head}_(IdxMixture, IdxRule, IDExample) -> Models = 1 ; Models = 0).
-
-        """
-
-        lines = '\n'.join(new_rules) + "\n"
-
-        # print(lines)
-
-        janus.consult("bg", self.lines_bg + to_assert + lines + self.lines_helper)
-        
-        # print(self.lines_bg + to_assert + lines + self.lines_helper)
-
-        # print("HERE")
-
-        res = janus.query_once(f"get_matrices({n_mixtures}, {n_rules}, L)")
-        if res["truth"]:
-            examples_matrices = res["L"]
-        else:
-            print("Error in querying background file (modeb)")
-            sys.exit()
-        
-        # print("RETURN")
-        # print(examples_matrices)
-        # for e in examples_matrices:
-        #     print(len(e))
-
-        # sys.exit()
-        
-        return examples_matrices
     
     def compute_parameters_mixtures(self,
             programs : 'list[Program]',

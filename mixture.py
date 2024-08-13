@@ -5,7 +5,7 @@ import time
 import sklearn.metrics
 import sys
 
-from scipy.optimize import minimize
+from scipy.optimize import minimize, show_options
 
 from data_structures import Program, Clause
 
@@ -57,7 +57,7 @@ class OptMixture():
         normalizing_factor = sum(weights_mixtures)
         prob_examples = []
         ll_examples = []
-        # print(self.examples, self.par_mixtures)
+
         for e, par_mixture in zip(self.examples, self.par_mixtures):
             prob_i = 0
             for k, p in zip(weights_mixtures, par_mixture):
@@ -131,9 +131,9 @@ class OptMixture():
         weights_mixtures = [0.5]*self.n_programs
         weights_mixtures = np.array([weights_mixtures]).reshape((self.n_programs, 1))
         # print(weights_mixtures)
-        print(f"weights_mixtures.shape (W): {weights_mixtures.shape}")
-        print(f"examples.shape (E): {self.E.shape}")
-        print(f"parameter_mixtures.shape (M): {self.M.shape}")
+        print(f"weights_mixtures.shape (W) (1 x M): {weights_mixtures.shape}")
+        print(f"examples.shape (E) (1 x N): {self.E.shape}")
+        print(f"parameter_mixtures.shape (M) (N x M): {self.M.shape}")
 
         assert weights_mixtures.shape[0] == self.M.shape[1]
         assert self.E.shape[1] == self.M.shape[0]
@@ -163,7 +163,7 @@ class MixtureGenerator():
     """
     def __init__(self,
             possible_atoms : 'list[str]',
-            target : 'list[str]',
+            targets : 'list[str]',
             # examples : 'list[Example]',
             # device : torch.device,
             n_rules_each_program : int = 2,
@@ -173,7 +173,7 @@ class MixtureGenerator():
         ) -> None:
         
         self.possible_atoms = possible_atoms
-        self.target = target # the head of the relation, list to handle arity > 1
+        self.targets = targets # the head of the relation, list to handle arity > 1
         # self.examples = examples
         self.n_rules_each_program = n_rules_each_program
         self.max_atoms_in_body = max_atoms_in_body
@@ -184,7 +184,7 @@ class MixtureGenerator():
 
         self.generate_programs()
 
-        if self.verbosity >= 1:
+        if self.verbosity >= 3:
             for p in self.programs:
                 print(p)
 
@@ -196,17 +196,22 @@ class MixtureGenerator():
         # here fixed 1 cycle
         # for idx in range(self.max_atoms_in_body, self.max_atoms_in_body + 1):
         # generate all possible combinations of atoms of fixed length
-        comb = itertools.combinations(self.possible_atoms, self.max_atoms_in_body)
+        comb = list(itertools.combinations(self.possible_atoms, self.max_atoms_in_body))
         # generate all possible rules
         # print(*comb)
-        prod = itertools.product(self.target, comb)
+
+        prods = []
+        # print(self.targets)
+        for t in self.targets:
+            prods.extend(list(itertools.product(t, comb)))
         # print(*prod)
-        for i, p in enumerate(prod):
+        # print(prods)
+        for i, p in enumerate(prods):
             # print(f"-- {p}")
             b = ','.join(p[1])
             r = f"{p[0]} :- {b}."
             possible_rules.append(r)
-        
+                
         # generate all possible programs by gluing the specified
         # number of rules - from 1 to the specified number
         # for n_rules in range(1, self.n_rules_each_program + 1):
@@ -217,5 +222,5 @@ class MixtureGenerator():
             #     print(f"Adding program {idx}")
             lc = []
             for c in prog:
-                lc.append(Clause(c, self.target))
+                lc.append(Clause(c, self.targets))
             self.programs.append(Program(lc))

@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import random
 import sys
@@ -8,23 +9,24 @@ from prolog_interface import PrologInterface
 from mixture import MixtureGenerator, OptMixture
 
 
-def generate_term(
-        atom : 'tuple[str, int]',
+def generate_term_prob(
+        # atom : 'tuple[str, int]',
+        atom : 'str',
         with_prob : bool = True
     ) -> 'list[str]':
     """
     Generate terms.
     """
 
-    (name, arity) = atom
+    # (name, arity) = atom
 
 
-    if arity == 0:
-        term = name
-    else:
-        term = name + "(" + ','.join(["_"]*arity) + ")"
+    # if arity == 0:
+    #     term = name
+    # else:
+    #     term = name + "(" + ','.join(["_"]*arity) + ")"
 
-    return [term + (" : 0.5" if with_prob else "")]
+    return [atom + (" : 0.5" if with_prob else "")]
 
 
 def main():
@@ -55,23 +57,25 @@ def main():
     # only 1)
     # exp is a list of list of 0/1 denoting that the ith example is positive
     # 1 or negative 0
-    modeb, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()   
-    
-    possible_atoms : 'list[str]' = []
+    possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()   
+        
+    k0 = math.comb(len(possible_atoms), args.nba)
+    n_mixtures = math.comb(k0 * len(target), args.nr)
 
-    for idx, el in enumerate(modeb):
-        possible_atoms.extend(generate_term(el, with_prob=False))
+    print(f"Generating {n_mixtures:_} mixtures")
 
-    if len(target) != 1:
-        print("Currently only one target is supported")
-        sys.exit()
-    
-    target = target[0]
+    # if n_mixtures > 1_000_000:
+    #     print("Too many mixtures")
+    #     sys.exit()
+
+    targets = []
+    for t in target:
+        targets.append(generate_term_prob(t, with_prob=True))
 
     start_time = time.time()
     mxt_model = MixtureGenerator(
         possible_atoms,
-        list(generate_term(target, with_prob=True)),
+        targets,
         n_rules_each_program=args.nr,
         max_atoms_in_body=args.nba,
         verbosity=args.verbosity
@@ -98,6 +102,9 @@ def main():
     print(f"Learned parameters and filtered in {end_time - start_time} s")
 
     print(f"Remained mixtures: {len(learned_programs)}")
+    if len(learned_programs) == 0:
+        return
+    
 
     if args.verbosity >= 1:
         print("Learned Programs")
