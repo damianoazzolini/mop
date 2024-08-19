@@ -8,6 +8,8 @@ from argparser import parse_args
 from prolog_interface import PrologInterface
 from mixture import MixtureGenerator, OptMixture
 
+from scipy.special import expit
+
 
 def generate_term_prob(
         # atom : 'tuple[str, int]',
@@ -57,16 +59,12 @@ def main():
     # only 1)
     # exp is a list of list of 0/1 denoting that the ith example is positive
     # 1 or negative 0
-    possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()   
-        
+    possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()
+
     k0 = math.comb(len(possible_atoms), args.nba)
     n_mixtures = math.comb(k0 * len(target), args.nr)
 
     print(f"Generating {n_mixtures:_} mixtures")
-
-    # if n_mixtures > 1_000_000:
-    #     print("Too many mixtures")
-    #     sys.exit()
 
     targets = []
     for t in target:
@@ -123,29 +121,40 @@ def main():
     print(f"Examples: {len(probabilities_examples_train)}")
     print(f"Mixtures: {len(learned_programs)}")
 
-    # LIFTCOVER può togliere regole dai programmi. In questo caso ottengo programmi uguali
-    # in learned_programs, che devo prima eliminare quando faccio apprendimento,
-    # per ridurre il numero di mixtures
+    cutoff_prob = math.pow(10, -args.cut)
 
-    om = OptMixture(probabilities_examples_train, exp_training, args.verbosity)
+    # LIFTCOVER may remove clauses from programs. I may get equal program.
+
+    om = OptMixture(
+        probabilities_examples_train,
+        exp_training,
+        args.maxfun,
+        args.gamma,
+        args.cut,
+        args.verbosity
+    )
     # loop over multiple iterations
     # for it in range(0,1):
         # print(f"Iteration {it}")
     res = om.find_optimal_weights_mixtures()
-    weights = res.x
+    weights = expit(res.x)
     ll = res.fun
     sum_weights = sum(weights)
-    print("--- Learned Mixtures ---")
+    # sum_weights = sum([w for w in weights if w > cutoff_prob])
+    print(f"--- Learned Mixtures (pruned below {cutoff_prob}) ---")
     # print(probabilities_examples)
     remaining_programs = 0
-    new_parameters_examples : 'list[list[float]]' = []
-    idx = 0
+    # new_parameters_examples : 'list[list[float]]' = []
+    # idx = 0
     for prog, w in zip(learned_programs, weights):
-        if w != 0.0:
+        if w > cutoff_prob:
             remaining_programs += 1
-            print(f"{w/sum_weights}: {prog}")
-            new_parameters_examples.append(probabilities_examples_train[idx])
-        idx += 1
+            if args.verbosity >= 1:
+                print(f"{w}: {prog}")
+        else:
+            sum_weights -= w
+            # new_parameters_examples.append(probabilities_examples_train[idx])
+        # idx += 1
     print(f"Remaining programs: {remaining_programs} ({remaining_programs/len(weights)})")
     print("Final Cross Entropy E. (training)")
     print(f"{ll}")
@@ -157,9 +166,7 @@ def main():
         # print(exp_test)
         om.examples = exp_test
         om.par_mixtures = list(np.transpose(np.array(probabilities_examples_test)))
-        om.dropout = 0
-        om.return_ll = True
-        ll_test, roc_test, pr_test = om.compute_ll_roc_examples(weights)
+        ll_test, roc_test, pr_test = om.compute_ll_roc_examples(weights, sum_weights)
         print(f"LL test: {ll_test}")
         print(f"ROC AUC test: {roc_test}")
         print(f"PR test: {pr_test}")    

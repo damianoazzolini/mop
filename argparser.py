@@ -24,12 +24,6 @@ def parse_args():
         type=str
     )
     command_parser.add_argument(
-        "-i",
-        "--with-id",
-        help="Use arity +1 where first argument is the ID of the example",
-        action="store_true"
-    )
-    command_parser.add_argument(
         "-nba",
         help="Maximum number of body atoms",
         type=int,
@@ -48,16 +42,22 @@ def parse_args():
         default=-1
     )
     command_parser.add_argument(
-        "-lr",
-        help="Learning rate.",
-        type=float,
-        default=0.1
+        "-maxfun",
+        help="Max number of function evaluations during optimization.",
+        type=int,
+        default=1_000
     )
     command_parser.add_argument(
-        "-l2",
-        help="Weight decay (L2 penalty).",
+        "-gamma",
+        help="Scale factor for L1 and L2.",
         type=float,
         default=0
+    )
+    command_parser.add_argument(
+        "-cut",
+        help="Cutoff value to drop mixture (i.e., drop if prob < 10e-cut).",
+        type=int,
+        default=10
     )
     command_parser.add_argument(
         "-v",

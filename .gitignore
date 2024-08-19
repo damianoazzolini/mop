@@ -16,6 +16,7 @@ p.pl
 run.sh
 helper.pl
 
+datasets/
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

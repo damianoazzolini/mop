@@ -25,6 +25,7 @@ class PrologInterface:
         # read helper file
         # f = open("helper.pl", "r")
         self.lines_helper = HELPER_FILE
+        # self.lines_helper = f.read()
         # f.close()
 
 
