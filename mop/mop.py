@@ -4,11 +4,12 @@ import random
 import sys
 import time
 
-from argparser import parse_args
-from prolog_interface import PrologInterface
-from mixture import MixtureGenerator, OptMixture
-
 from scipy.special import expit
+
+from .argparser import parse_args
+from .prolog_interface import PrologInterface
+from .mixture import MixtureGenerator, OptMixture
+
 
 
 def generate_term_prob(

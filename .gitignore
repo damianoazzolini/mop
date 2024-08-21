@@ -17,6 +17,7 @@ run.sh
 helper.pl
 
 datasets/
+experiments/
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

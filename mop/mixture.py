@@ -6,11 +6,9 @@ import sklearn.metrics
 import sys
 
 from scipy.optimize import minimize, show_options
-
-from data_structures import Program, Clause
-
 from scipy.special import expit
 
+from .data_structures import Program, Clause
 
 def my_log(v : float):
     try:
@@ -48,8 +46,6 @@ class OptMixture():
     def compute_ll_roc_examples(self, weights_mixtures, normalizing_factor) -> 'tuple[float,float,float]':
         """
         Computation of the LL and ROC.
-        Similar to the function to minimize but here to simplify
-        that function.
         """
         # weights_mixtures = np.abs(weights_mixtures)
         # weights_mixtures = expit(weights_mixtures)
@@ -66,7 +62,7 @@ class OptMixture():
                 else:
                     normalizing_factor -= k
             
-            # print(f"Pre: {prob_i}")
+            # print(f"Pre: {prob_i/normalizing_factor}")
             # cross_entropy_i = -1 * e * my_log(prob_i/normalizing_factor) - (1 - e) * my_log(1 - prob_i/normalizing_factor)
 
             ll = my_log(prob_i/normalizing_factor) if e == 1 else my_log(1-prob_i/normalizing_factor)

@@ -2,7 +2,7 @@ import sys
 
 import janus_swi as janus
 
-from data_structures import Program
+from .data_structures import Program
 
 class PrologInterface:
     def __init__(
@@ -191,29 +191,33 @@ get_atom(Atoms, Id, AtomWithId):-
   append([Id],NB,BId),
   AtomWithId =.. [Name|BId].
 
-% pos_neg(Target,Id, [1.0]):-
-pos_neg(TargetAtom, Id, 1.0):-
-  get_atom(TargetAtom, Id, T),
-  T, !.
-% pos_neg(Target,Id, [0.0]):-
-pos_neg(TargetAtom, Id, 0.0):-
-  get_atom(TargetAtom, Id, T),
-  neg(T), !.
-% pos_neg(Target,Id, [0.0]):-
-pos_neg(TargetAtom, Id, []):-
-  get_atom(TargetAtom, Id, T),
+pos_neg(TargetAtom, 1.0):-
+  TargetAtom, !.
+pos_neg(TargetAtom, 0.0):-
+  neg(TargetAtom), !.
+pos_neg(TargetAtom, []):-
   writeln("Example not found"),
-  writeln(T),
+  writeln(TargetAtom),
   false.
-  % false.
+
+pos_neg_wrapper(TargetAtom, Id, LPosNeg):-
+  get_atom(TargetAtom, Id, Atom),
+  (ground(Atom) ->
+    pos_neg(Atom, LPosNeg) ;
+    findall(Atom, Atom, TAGroundP),
+    findall(Atom, neg(Atom), TAGroundN),
+    append(TAGroundP, TAGroundN, TAGround),
+    maplist(pos_neg,TAGround,LPosNeg) % this is useless but ok to have 0.0 and 1.0
+  ).
 
 % :- dynamic not_found/1.
 
-get_fold_01(TargetAtom, Set,L01):-
+get_fold_01(TargetAtom, Set, L01F):-
   findall(S,(fold(N,S), member(N,Set)), LF),
   flatten(LF, LL),
   sort(LL,LS),
-  maplist(pos_neg(TargetAtom), LS, L01).
+  maplist(pos_neg_wrapper(TargetAtom), LS, L01),
+  flatten(L01, L01F).
 
 
 get_01(TargetAtomsList, TrainSet, TestSet, L01Train, L01Test):-
