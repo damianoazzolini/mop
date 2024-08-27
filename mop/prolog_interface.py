@@ -391,6 +391,7 @@ train(TrainingFolds,TestFolds,LearnedPrograms,LProbsFinalTrain,LProbsFinalTest):
   % writeln(LProbsFinalTrain),
   % halt,
   % so I don't have to call it another time
+  % TODO - if no test set, this must be discarded
   writeln("Computation probability test set"),
   compute_probability_examples(LP,TestFolds,LProbsFinalTest).
 """

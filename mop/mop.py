@@ -39,10 +39,7 @@ def main():
     args = parse_args()
     print(args)
 
-    if args.dataset:
-        bg = "datasets/" + args.dataset + ".pl"
-    else:
-        bg = args.filename
+    bg = args.filename
     print(f"Dataset: {bg}")
 
     train_set = list(map(int, args.train))
@@ -131,6 +128,8 @@ def main():
         exp_training,
         args.maxfun,
         args.gamma,
+        args.l1,
+        args.l2,
         args.cut,
         args.verbosity
     )

@@ -11,13 +11,6 @@ def parse_args():
     )
 
     command_parser.add_argument(
-        "-d",
-        "--dataset",
-        help="Dataset",
-        type=str,
-        choices=["muta", "pyrimidine", "triazine", "yeast", "bupa", "dummy"]
-    )
-    command_parser.add_argument(
         "-f",
         "--filename",
         help="Program to analyse",
@@ -52,6 +45,16 @@ def parse_args():
         help="Scale factor for L1 and L2.",
         type=float,
         default=0
+    )
+    command_parser.add_argument(
+        "-l1",
+        help="L1 regularization.",
+        action="store_true"
+    )
+    command_parser.add_argument(
+        "-l2",
+        help="L2 regularization.",
+        action="store_true"
     )
     command_parser.add_argument(
         "-cut",

@@ -25,6 +25,8 @@ class OptMixture():
             examples : 'list[float]',
             maxfun : int,
             gamma : int,
+            l0 : int,
+            l1 : int,
             cutoff_exp : int,
             verbosity : int = 0,
         ) -> None:
@@ -34,6 +36,8 @@ class OptMixture():
         self.examples : 'list[float]' = examples # 0 negative, 1 positive 
         self.verbosity = verbosity
         self.gamma : float = gamma
+        self.l0 : int = l0
+        self.l1 : int = l1
         self.E = np.array([self.examples])
         self.M = np.array(self.par_mixtures)
         self.maxfun = maxfun
@@ -101,7 +105,8 @@ class OptMixture():
         L1E = np.dot(-1, self.E) @ L1
         
         # - (1 - e) * my_log(1 - prob_i/normalizing_factor) 
-        # L2 = np.log(1 - D) 
+        # L2 = np.log(1 - D)
+        # ok since MW is not a probability but a weight, so 1 - MW is not ok
         D1 = 1 - D
         prob_tmp = np.where(D1 > self.cutoff_prob, D1, self.cutoff_prob)
         L2 = np.where(D1 > self.cutoff_prob, np.log(prob_tmp), math.log(self.cutoff_prob))
@@ -116,7 +121,7 @@ class OptMixture():
 
         # print(R.shape)
 
-        R = R + np.sum(W)*self.gamma + np.sum(W**2)*(self.gamma/2)
+        R = R + np.sum(W)*self.gamma*self.l0 + np.sum(W**2)*(self.gamma/2)*self.l1
 
         return R
 
