@@ -1,6 +1,7 @@
 import itertools
 import math
 import numpy as np
+import random
 import time
 import sklearn.metrics
 import sys
@@ -23,7 +24,6 @@ class OptMixture():
     def __init__(self,
             parameters_mixtures : 'list[list[float]]',
             examples : 'list[float]',
-            maxfun : int,
             gamma : int,
             l0 : int,
             l1 : int,
@@ -40,7 +40,6 @@ class OptMixture():
         self.l1 : int = l1
         self.E = np.array([self.examples])
         self.M = np.array(self.par_mixtures)
-        self.maxfun = maxfun
         self.cutoff_prob = math.pow(10, -cutoff_exp)
         # iterations counter
         self.it = 0
@@ -160,11 +159,10 @@ class OptMixture():
             # self.compute_cross_entropy_error_examples_matrix_jax,
             # obj_and_grad,
             # self.compute_negative_ll_examples,
-            weights_mixtures,
+            weights_mixtures
             # bounds=[(0,100)]*self.n_programs,
             # options={'disp': True}
             # jac=True,
-            options={'maxfun': self.maxfun} # with default values this may be better, less overfitting
             # method="SLSQP"
         )
         print(res)
@@ -179,31 +177,49 @@ class MixtureGenerator():
     def __init__(self,
             possible_atoms : 'list[str]',
             targets : 'list[str]',
-            # examples : 'list[Example]',
-            # device : torch.device,
             n_rules_each_program : int = 2,
             max_atoms_in_body : int = 3,
-            verbosity : int = 0,
-            toss_probability : int = 0
+            samples : int = -1,
+            verbosity : int = 0
         ) -> None:
         
         self.possible_atoms = possible_atoms
         self.targets = targets # the head of the relation, list to handle arity > 1
-        # self.examples = examples
         self.n_rules_each_program = n_rules_each_program
         self.max_atoms_in_body = max_atoms_in_body
+        self.samples = samples
         self.verbosity = verbosity
-        self.toss_probability = toss_probability
 
         self.programs : 'list[Program]' = []
 
-        self.generate_programs()
+        # if self.verbosity >= 3:
+        #     for p in self.programs:
+        #         print(p)
 
-        if self.verbosity >= 3:
-            for p in self.programs:
-                print(p)
 
-    def generate_programs(self):
+    def sample_programs(self):
+        """
+        Samples programs.
+        """
+        self.programs = []
+        for _ in range(self.samples):
+            lc : 'list[Clause]' = []
+            attempts = 0
+            while len(lc) < self.n_rules_each_program:
+                if attempts > 1_000:
+                    print("Exceeded number of attempts to generate clauses")
+                    print("Maybe there are too few atoms")
+                    sys.exit()
+                attempts += 1
+                head_atom = random.sample(self.targets, 1) # only one head atom
+                body_list = random.sample(self.possible_atoms, self.max_atoms_in_body)
+                rule = head_atom[0][0] + " :- " + ','.join(body_list) + "."
+                if rule not in lc:
+                    lc.append(Clause(rule))
+            self.programs.append(Program(lc))
+
+
+    def generate_all_programs(self):
         """
         Generates all the possible programs.
         """

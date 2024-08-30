@@ -9,7 +9,6 @@ def parse_args():
         # epilog="Example: ",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-
     command_parser.add_argument(
         "-f",
         "--filename",
@@ -29,18 +28,6 @@ def parse_args():
         default=2
     )
     command_parser.add_argument(
-        "-nm",
-        help="maximum number of mixtures to consider.",
-        type=int,
-        default=-1
-    )
-    command_parser.add_argument(
-        "-maxfun",
-        help="Max number of function evaluations during optimization.",
-        type=int,
-        default=1_000
-    )
-    command_parser.add_argument(
         "-gamma",
         help="Scale factor for L1 and L2.",
         type=float,
@@ -48,12 +35,12 @@ def parse_args():
     )
     command_parser.add_argument(
         "-l1",
-        help="L1 regularization.",
+        help="Enable L1 regularization.",
         action="store_true"
     )
     command_parser.add_argument(
         "-l2",
-        help="L2 regularization.",
+        help="Enable L2 regularization.",
         action="store_true"
     )
     command_parser.add_argument(
@@ -79,6 +66,12 @@ def parse_args():
         "--test",
         nargs="+",
         help="Folds for the test set"
+    )
+    command_parser.add_argument(
+        "--samples",
+        help="Samples mixtures",
+        type=int,
+        default=-1
     )
 
     return command_parser.parse_args()

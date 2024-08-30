@@ -69,7 +69,7 @@ class PrologInterface:
             programs : 'list[Program]',
             train_set : 'list[int]',
             test_set : 'list[int]'
-        ) -> 'tuple[list[str],list[list[float]],list[list[float]]]':
+        ) -> 'tuple[list[list[str]],list[list[float]],list[list[float]]]':
         """
         Calls LIFTCOVER parameter learning on each program
         and computes probabilities.
@@ -78,10 +78,14 @@ class PrologInterface:
         programs_in : str = ""
 
         for p in programs:
+            # print(f"p -->: {p}")
             programs_in += "in(["
             for cl in p.clauses:
                 # print(f"adding: {cl.clause}")
-                programs_in += f"({cl.clause[:-1]}),"
+                if cl.clause.endswith("."):
+                  programs_in += f"({cl.clause[:-1]}),"
+                else:
+                  programs_in += f"({cl.clause}),"
             
             programs_in = programs_in[:-1] +  "]).\n"
         
