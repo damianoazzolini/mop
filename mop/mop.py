@@ -38,8 +38,6 @@ def main():
     Main method.
     """
     args = parse_args()
-    print(args)
-
     bg = args.filename
     print(f"Dataset: {bg}")
 
@@ -52,18 +50,21 @@ def main():
     # exp is a list of list of 0/1 denoting that the ith example is positive
     # 1 or negative 0
     possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()
+    k0 = math.comb(len(possible_atoms), args.nba)
+    n_mixtures = math.comb(k0 * len(target), args.nr)
+    print(f"Total number of mixture components: {n_mixtures:_}")
+    computing_all = args.samples_number == -1 and args.samples_percentage == -1
 
-    if args.samples_number == -1:
-        k0 = math.comb(len(possible_atoms), args.nba)
-        n_mixtures = math.comb(k0 * len(target), args.nr)
-        print(f"Generating {n_mixtures:_} mixtures")
-    else:
-        print(f"Sampling {args.samples_number:_} mixtures")
-        
+    if computing_all:
+        print("Generating all mixture components")
+    elif args.samples_number != -1:
+        print(f"Sampling {args.samples_number:_} mixture components")
+    elif args.samples_percentage != -1:
+        print(f"Sampling {args.samples_percentage}% mixture components")
 
-    targets = []
+    targets : 'list[list[str]]' = []
     for t in target:
-        targets.append(generate_term_prob(t, with_prob=True))
+        targets.append(generate_term_prob(str(t), with_prob=True))
 
     mxt_model = MixtureGenerator(
         possible_atoms,
@@ -71,11 +72,12 @@ def main():
         args
     )
 
-    if args.samples_number == -1:
+    if computing_all:
         mxt_model.generate_all_programs()
     else:
-        mxt_model.sample_programs()
-    print(f"Total number of mixtures: {len(mxt_model.programs):_}")
+        n_samples = args.samples_number if args.samples_number != -1 else int(n_mixtures * args.samples_percentage / 100) 
+        mxt_model.sample_programs(n_samples)
+    print(f"Considered number of mixture components: {len(mxt_model.programs):_}")
 
     om = OptMixture(
         [],
@@ -125,7 +127,7 @@ def main():
                 print("Probabilities Examples Test")
                 print(probabilities_examples_test)
         assert len(learned_programs) == len(probabilities_examples_train)
-        if args.samples_number == -1:
+        if computing_all:
             assert len(learned_programs) <= len(mxt_model.programs), f"found: {len(learned_programs)} expected <= {len(mxt_model.programs)}"
             assert len(probabilities_examples_train) <= len(mxt_model.programs)
         # assert all(len(x) == len(learned_programs[0]) for x in learned_programs)
@@ -167,7 +169,7 @@ def main():
         print(f"{current_cross_ee}")
 
         # sample new programs
-        if args.samples_number != -1:
+        if args.samples_number != -1 and args.iterative:
             mxt_model.sample_programs()
         else:
             break

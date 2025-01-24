@@ -132,7 +132,6 @@ class OptMixture():
         print("Starting optimization process")
         # print("Parameters mixtures")
         # print(self.par_mixtures)
-        import random
         # weights_mixtures : 'list[float]' = []
         # for i in range(self.n_programs):
             # weights_mixtures.append(random.random())
@@ -194,12 +193,12 @@ class MixtureGenerator():
         #         print(p)
 
 
-    def sample_programs(self):
+    def sample_programs(self, n_samples : int):
         """
         Samples programs.
         """
         self.programs = []
-        for _ in range(self.parameters.samples_number):
+        for _ in range(n_samples):
             lc : 'list[Clause]' = []
             attempts = 0
             while len(lc) < self.parameters.nr:

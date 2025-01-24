@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 class Parameters:
     def __init__(self, args: argparse.Namespace) -> None:
@@ -13,7 +14,12 @@ class Parameters:
         self.train_set : 'list[int]' = list(map(int, args.train))
         self.test_set : 'list[int]' = list(map(int, args.test)) if args.test is not None else []
         self.samples_number : int = args.samples_number
+        self.iterative : bool = args.iterative
         self.samples_percentage : float = args.samples_percentage
+
+        if self.samples_number != -1 and self.samples_percentage != -1:
+            print("Use either --samples-number or --samples-percentage")
+            sys.exit()
 
 def parse_args():
     """
@@ -89,11 +95,17 @@ def parse_args():
         default=-1
     )
     command_parser.add_argument(
+        "--iterative",
+        help="Iteratively keeps sampling until there is an improvement",
+        action="store_true"
+    )
+    command_parser.add_argument(
         "--samples-percentage",
         help="Percentage of components to sample",
         type=int,
         default=-1
     )
-
-    return Parameters(command_parser.parse_args())
+    args = command_parser.parse_args()
+    print(args)
+    return Parameters(args)
 
