@@ -1,23 +1,16 @@
 import sys
+import time
 
 import janus_swi as janus
 
+from .argparser import Parameters
 from .data_structures import Program
 
 class PrologInterface:
-    def __init__(
-            self,
-            bg : str,
-            train_set : 'list[int]',
-            test_set : 'list[int]',
-            verbosity : int = 0
-        ) -> None:
-        self.verbosity = verbosity
-        self.train_set = train_set
-        self.test_set = test_set
-
+    def __init__(self, parameters : Parameters) -> None:
         # read bg knowledge
-        f = open(bg, "r")
+        self.parameters : Parameters = parameters
+        f = open(parameters.filename, "r")
         lines_bg = f.read()
         f.close()
         self.lines_bg = ":- style_check(-discontiguous).\n:- style_check(-singleton).\n" + lines_bg
@@ -54,7 +47,7 @@ class PrologInterface:
         # print(target_predicate)
 
         # res = janus.query_once(f"get_01({target_predicate[0][0]}, {target_predicate[0][1]}, {self.train_set}, {self.test_set}, L01Train, L01Test)")
-        res = janus.query_once(f"get_01({target_predicate}, {self.train_set}, {self.test_set}, L01Train, L01Test)")
+        res = janus.query_once(f"get_01({target_predicate}, {self.parameters.train_set}, {self.parameters.test_set}, L01Train, L01Test)")
         if res["truth"]:
             l01_train = res["L01Train"]
             l01_test = res["L01Test"]
@@ -65,11 +58,7 @@ class PrologInterface:
         return modeb, target_predicate, l01_train, l01_test
 
     
-    def compute_parameters_mixtures(self,
-            programs : 'list[Program]',
-            train_set : 'list[int]',
-            test_set : 'list[int]'
-        ) -> 'tuple[list[list[str]],list[list[float]],list[list[float]]]':
+    def compute_parameters_mixtures(self,programs : 'list[Program]') -> 'tuple[list[list[str]],list[list[float]],list[list[float]]]':
         """
         Calls LIFTCOVER parameter learning on each program
         and computes probabilities.
@@ -89,7 +78,7 @@ class PrologInterface:
             
             programs_in = programs_in[:-1] +  "]).\n"
         
-        if self.verbosity >= 1:
+        if self.parameters.verbosity >= 1:
             print("Programs in")
             print(programs_in)
 
@@ -105,16 +94,20 @@ class PrologInterface:
 
         # query = "findall(P,induce_par_lift([2],P),LP)."
         # res = janus.query_once(f"findall(P,induce_par_lift([2],P),LP)")
-        try:
-            training_folds = list(map(int, train_set))
-        except:
-            training_folds = train_set
-        try:
-            test_folds = list(map(int, test_set))
-        except:
-            test_folds = test_set
-
-        res = janus.query_once(f"train({training_folds},{test_folds},LearnedPrograms,ProbTrain,ProbTest)")
+        # try:
+        #     training_folds = list(map(int, train_set))
+        # except:
+        #     training_folds = train_set
+        # try:
+        #     test_folds = list(map(int, test_set))
+        # except:
+        #     test_folds = test_set
+        
+        start_time = time.time()
+        res = janus.query_once(f"train({self.parameters.test_set},{self.parameters.train_set},LearnedPrograms,ProbTrain,ProbTest)")
+        end_time = time.time()
+        print(f"Time for learning: {end_time - start_time} s")
+        # sys.exit()
         if res["truth"]:
             return res["LearnedPrograms"], res["ProbTrain"], res["ProbTest"]
         else:

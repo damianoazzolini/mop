@@ -1,5 +1,20 @@
 import argparse
 
+class Parameters:
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.filename : str = args.filename
+        self.nba : int = args.nba
+        self.nr : int = args.nr
+        self.gamma : float = args.gamma
+        self.l1 : bool = args.l1
+        self.l2 : bool = args.l2
+        self.cut : int = args.cut
+        self.verbosity : int = args.verbosity
+        self.train_set : 'list[int]' = list(map(int, args.train))
+        self.test_set : 'list[int]' = list(map(int, args.test)) if args.test is not None else []
+        self.samples_number : int = args.samples_number
+        self.samples_percentage : float = args.samples_percentage
+
 def parse_args():
     """
     Arguments parser.
@@ -68,11 +83,17 @@ def parse_args():
         help="Folds for the test set"
     )
     command_parser.add_argument(
-        "--samples",
-        help="Samples mixtures",
+        "--samples-number",
+        help="Number of components to sample",
+        type=int,
+        default=-1
+    )
+    command_parser.add_argument(
+        "--samples-percentage",
+        help="Percentage of components to sample",
         type=int,
         default=-1
     )
 
-    return command_parser.parse_args()
+    return Parameters(command_parser.parse_args())
 

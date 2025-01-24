@@ -10,6 +10,7 @@ from scipy.optimize import minimize, show_options
 from scipy.special import expit
 
 from .data_structures import Program, Clause
+from .argparser import Parameters
 
 def my_log(v : float):
     try:
@@ -24,23 +25,22 @@ class OptMixture():
     def __init__(self,
             parameters_mixtures : 'list[list[float]]',
             examples : 'list[float]',
-            gamma : int,
-            l0 : int,
-            l1 : int,
-            cutoff_exp : int,
-            verbosity : int = 0,
+            parameters : Parameters
+            # gamma : int,
+            # l0 : int,
+            # l1 : int,
+            # cutoff_exp : int,
+            # verbosity : int = 0,
         ) -> None:
         # each list is the prob of the fixed example in the program i
         self.n_programs = len(parameters_mixtures)
         self.par_mixtures = list(np.transpose(np.array(parameters_mixtures)))
         self.examples : 'list[float]' = examples # 0 negative, 1 positive 
-        self.verbosity = verbosity
-        self.gamma : float = gamma
-        self.l0 : int = l0
-        self.l1 : int = l1
+        self.parameters : Parameters = parameters
+
         self.E = np.array([self.examples])
         self.M = np.array(self.par_mixtures)
-        self.cutoff_prob = math.pow(10, -cutoff_exp)
+        self.cutoff_prob = math.pow(10, -self.parameters.cut)
         # iterations counter
         self.it = 0
 
@@ -120,7 +120,7 @@ class OptMixture():
 
         # print(R.shape)
 
-        R = R + np.sum(W)*self.gamma*self.l0 + np.sum(W**2)*(self.gamma/2)*self.l1
+        R = R + np.sum(W)*self.parameters.gamma*self.parameters.l1 + np.sum(W**2)*(self.parameters.gamma/2)*self.parameters.l2
 
         return R
 
@@ -177,19 +177,16 @@ class MixtureGenerator():
     def __init__(self,
             possible_atoms : 'list[str]',
             targets : 'list[str]',
-            n_rules_each_program : int = 2,
-            max_atoms_in_body : int = 3,
-            samples : int = -1,
-            verbosity : int = 0
+            parameters : Parameters
+            # n_rules_each_program : int = 2,
+            # max_atoms_in_body : int = 3,
+            # samples : int = -1,
+            # verbosity : int = 0
         ) -> None:
         
         self.possible_atoms = possible_atoms
         self.targets = targets # the head of the relation, list to handle arity > 1
-        self.n_rules_each_program = n_rules_each_program
-        self.max_atoms_in_body = max_atoms_in_body
-        self.samples = samples
-        self.verbosity = verbosity
-
+        self.parameters : Parameters = parameters
         self.programs : 'list[Program]' = []
 
         # if self.verbosity >= 3:
@@ -202,19 +199,19 @@ class MixtureGenerator():
         Samples programs.
         """
         self.programs = []
-        for _ in range(self.samples):
+        for _ in range(self.parameters.samples_number):
             lc : 'list[Clause]' = []
             attempts = 0
-            while len(lc) < self.n_rules_each_program:
+            while len(lc) < self.parameters.nr:
                 if attempts > 1_000:
                     print("Exceeded number of attempts to generate clauses")
                     print("Maybe there are too few atoms")
                     sys.exit()
                 attempts += 1
                 head_atom = random.sample(self.targets, 1) # only one head atom
-                body_list = random.sample(self.possible_atoms, self.max_atoms_in_body)
+                body_list = random.sample(self.possible_atoms, self.parameters.nba)
                 rule = head_atom[0][0] + " :- " + ','.join(body_list) + "."
-                if rule not in lc:
+                if Clause(rule) not in lc:
                     lc.append(Clause(rule))
             self.programs.append(Program(lc))
 
@@ -227,7 +224,7 @@ class MixtureGenerator():
         # here fixed 1 cycle
         # for idx in range(self.max_atoms_in_body, self.max_atoms_in_body + 1):
         # generate all possible combinations of atoms of fixed length
-        comb = list(itertools.combinations(self.possible_atoms, self.max_atoms_in_body))
+        comb = list(itertools.combinations(self.possible_atoms, self.parameters.nba))
         # generate all possible rules
         # print(*comb)
 
@@ -248,7 +245,7 @@ class MixtureGenerator():
         # for n_rules in range(1, self.n_rules_each_program + 1):
         # exactly the specified number
         # for idx, prog in enumerate(itertools.combinations(possible_rules, n_rules)):
-        for idx, prog in enumerate(itertools.combinations(possible_rules, self.n_rules_each_program)):
+        for idx, prog in enumerate(itertools.combinations(possible_rules, self.parameters.nr)):
             # print(f"-> {prog}")
             # if idx % 50 == 0:
             #     print(f"Adding program {idx}")

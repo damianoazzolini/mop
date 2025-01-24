@@ -43,14 +43,7 @@ def main():
     bg = args.filename
     print(f"Dataset: {bg}")
 
-    train_set = list(map(int, args.train))
-
-    if args.test is None:
-        test_set = []
-    else:
-        test_set = list(map(int, args.test))
-
-    prolog_interface = PrologInterface(bg, train_set, test_set, args.verbosity)
+    prolog_interface = PrologInterface(args)
 
 
     # modeb is a list of atoms that can appear in the body
@@ -60,12 +53,12 @@ def main():
     # 1 or negative 0
     possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()
 
-    if args.samples == -1:
+    if args.samples_number == -1:
         k0 = math.comb(len(possible_atoms), args.nba)
         n_mixtures = math.comb(k0 * len(target), args.nr)
         print(f"Generating {n_mixtures:_} mixtures")
     else:
-        print(f"Sampling {args.samples:_} mixtures")
+        print(f"Sampling {args.samples_number:_} mixtures")
         
 
     targets = []
@@ -75,13 +68,10 @@ def main():
     mxt_model = MixtureGenerator(
         possible_atoms,
         targets,
-        n_rules_each_program=args.nr,
-        max_atoms_in_body=args.nba,
-        samples=args.samples,
-        verbosity=args.verbosity
+        args
     )
 
-    if args.samples == -1:
+    if args.samples_number == -1:
         mxt_model.generate_all_programs()
     else:
         mxt_model.sample_programs()
@@ -90,11 +80,12 @@ def main():
     om = OptMixture(
         [],
         exp_training,
-        args.gamma,
-        args.l1,
-        args.l2,
-        args.cut,
-        args.verbosity
+        args
+        # args.gamma,
+        # args.l1,
+        # args.l2,
+        # args.cut,
+        # args.verbosity
     )
 
     previously_sampled : 'list[Program]' = []
@@ -107,7 +98,7 @@ def main():
     while (previous_cross_ee >= current_cross_ee) and it < 100:
         it += 1
 
-        if args.samples != -1:
+        if args.samples_number != -1:
             print(f"Iteration {it}")
         
         considered_programs : 'list[Program]' = previously_sampled + mxt_model.programs
@@ -115,9 +106,7 @@ def main():
         
         start_time = time.time()
         learned_programs, probabilities_examples_train, probabilities_examples_test = prolog_interface.compute_parameters_mixtures(
-            considered_programs,
-            args.train,
-            args.test
+            considered_programs
         )
         end_time = time.time()
         print(f"Learned parameters and filtered in {end_time - start_time} s")
@@ -136,7 +125,7 @@ def main():
                 print("Probabilities Examples Test")
                 print(probabilities_examples_test)
         assert len(learned_programs) == len(probabilities_examples_train)
-        if args.samples == -1:
+        if args.samples_number == -1:
             assert len(learned_programs) <= len(mxt_model.programs), f"found: {len(learned_programs)} expected <= {len(mxt_model.programs)}"
             assert len(probabilities_examples_train) <= len(mxt_model.programs)
         # assert all(len(x) == len(learned_programs[0]) for x in learned_programs)
@@ -178,7 +167,7 @@ def main():
         print(f"{current_cross_ee}")
 
         # sample new programs
-        if args.samples != -1:
+        if args.samples_number != -1:
             mxt_model.sample_programs()
         else:
             break
@@ -197,7 +186,7 @@ def main():
         print(f"ROC AUC test: {roc_test}")
         print(f"PR test: {pr_test}")    
 
-    if args.samples:
+    if args.samples_number:
         print("CEE iterations during training")
         for i in range(0, len(cee_list)):
             if i == 0:
