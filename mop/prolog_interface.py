@@ -104,7 +104,7 @@ class PrologInterface:
         #     test_folds = test_set
         
         start_time = time.time()
-        res = janus.query_once(f"train({self.parameters.test_set},{self.parameters.train_set},LearnedPrograms,ProbTrain,ProbTest)")
+        res = janus.query_once(f"train({self.parameters.train_set},{self.parameters.test_set},LearnedPrograms,ProbTrain,ProbTest)")
         end_time = time.time()
         print(f"Time for learning: {end_time - start_time} s")
         # sys.exit()
