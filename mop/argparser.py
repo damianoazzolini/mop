@@ -26,7 +26,7 @@ def parse_args():
     Arguments parser.
     """
     command_parser = argparse.ArgumentParser(
-        description="MOP: Mixtures Of Probabilistic logic programs",
+        description="MOP: Mixture Of Probabilistic logic programs",
         # epilog="Example: ",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )

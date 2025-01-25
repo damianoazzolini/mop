@@ -58,7 +58,7 @@ class PrologInterface:
         return modeb, target_predicate, l01_train, l01_test
 
     
-    def compute_parameters_mixtures(self,programs : 'list[Program]') -> 'tuple[list[list[str]],list[list[float]],list[list[float]]]':
+    def compute_parameters_mixture_components(self,programs : 'list[Program]') -> 'tuple[list[list[str]],list[list[float]],list[list[float]]]':
         """
         Calls LIFTCOVER parameter learning on each program
         and computes probabilities.

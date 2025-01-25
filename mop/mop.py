@@ -51,8 +51,8 @@ def main():
     # 1 or negative 0
     possible_atoms, target, exp_training, exp_test = prolog_interface.get_modeb_target_and_pos_or_neg_list()
     k0 = math.comb(len(possible_atoms), args.nba)
-    n_mixtures = math.comb(k0 * len(target), args.nr)
-    print(f"Total number of mixture components: {n_mixtures:_}")
+    n_mixture_components = math.comb(k0 * len(target), args.nr)
+    print(f"Total number of mixture components: {n_mixture_components:_}")
     computing_all = args.samples_number == -1 and args.samples_percentage == -1
 
     if computing_all:
@@ -75,7 +75,7 @@ def main():
     if computing_all:
         mxt_model.generate_all_programs()
     else:
-        n_samples = args.samples_number if args.samples_number != -1 else int(n_mixtures * args.samples_percentage / 100) 
+        n_samples = args.samples_number if args.samples_number != -1 else int(n_mixture_components * args.samples_percentage / 100) 
         mxt_model.sample_programs(n_samples)
     print(f"Considered number of mixture components: {len(mxt_model.programs):_}")
 
@@ -107,13 +107,13 @@ def main():
         previously_sampled = []
         
         start_time = time.time()
-        learned_programs, probabilities_examples_train, probabilities_examples_test = prolog_interface.compute_parameters_mixtures(
+        learned_programs, probabilities_examples_train, probabilities_examples_test = prolog_interface.compute_parameters_mixture_components(
             considered_programs
         )
         end_time = time.time()
         print(f"Learned parameters and filtered in {end_time - start_time} s")
 
-        print(f"Remained mixtures: {len(learned_programs)}")
+        print(f"Remained mixture components: {len(learned_programs)}")
         if len(learned_programs) == 0:
             return
 
@@ -133,17 +133,17 @@ def main():
         # assert all(len(x) == len(learned_programs[0]) for x in learned_programs)
 
         print(f"Examples: {len(probabilities_examples_train)}")
-        print(f"Mixtures: {len(learned_programs)}")
+        print(f"Mixture components: {len(learned_programs)}")
 
         cutoff_prob = math.pow(10, -args.cut)
 
         # LIFTCOVER may remove clauses from programs. I may get equal program.
         
         om.n_programs = len(probabilities_examples_train)
-        om.par_mixtures = list(np.transpose(np.array(probabilities_examples_train)))
-        om.M = np.array(om.par_mixtures)
+        om.par_mixture_components = list(np.transpose(np.array(probabilities_examples_train)))
+        om.M = np.array(om.par_mixture_components)
 
-        res = om.find_optimal_weights_mixtures()
+        res = om.find_optimal_weights_mixture_components()
         weights = expit(res.x)
 
         previous_cross_ee = current_cross_ee
@@ -153,7 +153,7 @@ def main():
         # ll = res.fun
         sum_weights = sum(weights)
 
-        print(f"--- Learned Mixtures (pruned below {cutoff_prob}) ---")
+        print(f"--- Learned Mixture (pruned below {cutoff_prob}) ---")
         remaining_programs = 0
         for prog, w in zip(learned_programs, weights):
             if w > cutoff_prob:
@@ -182,7 +182,7 @@ def main():
         print("Testing")
         # print(exp_test)
         om.examples = exp_test
-        om.par_mixtures = list(np.transpose(np.array(probabilities_examples_test)))
+        om.par_mixture_components = list(np.transpose(np.array(probabilities_examples_test)))
         ll_test, roc_test, pr_test = om.compute_ll_roc_examples(weights, sum_weights)
         print(f"LL test: {ll_test}")
         print(f"ROC AUC test: {roc_test}")

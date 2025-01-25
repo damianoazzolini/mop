@@ -23,7 +23,7 @@ class OptMixture():
     Class to minimize the NLL of the examples given the programs.
     """
     def __init__(self,
-            parameters_mixtures : 'list[list[float]]',
+            parameters_components : 'list[list[float]]',
             examples : 'list[float]',
             parameters : Parameters
             # gamma : int,
@@ -33,20 +33,19 @@ class OptMixture():
             # verbosity : int = 0,
         ) -> None:
         # each list is the prob of the fixed example in the program i
-        self.n_programs = len(parameters_mixtures)
-        self.par_mixtures = list(np.transpose(np.array(parameters_mixtures)))
+        self.n_programs = len(parameters_components)
+        self.par_mixture_components = list(np.transpose(np.array(parameters_components)))
         self.examples : 'list[float]' = examples # 0 negative, 1 positive 
         self.parameters : Parameters = parameters
 
         self.E = np.array([self.examples])
-        self.M = np.array(self.par_mixtures)
+        self.M = np.array(self.par_mixture_components)
         self.cutoff_prob = math.pow(10, -self.parameters.cut)
         # iterations counter
         self.it = 0
 
-        # print(self.par_mixtures)
 
-    def compute_ll_roc_examples(self, weights_mixtures, normalizing_factor) -> 'tuple[float,float,float]':
+    def compute_ll_roc_examples(self, weights_mixture_components, normalizing_factor) -> 'tuple[float,float,float]':
         """
         Computation of the LL and ROC.
         """
@@ -57,9 +56,9 @@ class OptMixture():
         prob_examples = []
         ll_examples = []
 
-        for e, par_mixture in zip(self.examples, self.par_mixtures):
+        for e, par_mixture in zip(self.examples, self.par_mixture_components):
             prob_i = 0
-            for k, p in zip(weights_mixtures, par_mixture):
+            for k, p in zip(weights_mixture_components, par_mixture):
                 if k > self.cutoff_prob:
                     prob_i += k*p
                 else:
@@ -125,7 +124,7 @@ class OptMixture():
         return R
 
 
-    def find_optimal_weights_mixtures(self):
+    def find_optimal_weights_mixture_components(self):
         """
         Optimization process.
         """
@@ -135,14 +134,14 @@ class OptMixture():
         # weights_mixtures : 'list[float]' = []
         # for i in range(self.n_programs):
             # weights_mixtures.append(random.random())
-        weights_mixtures = [0.5]*self.n_programs
-        weights_mixtures = np.array([weights_mixtures]).reshape((self.n_programs, 1))
+        weights_mixture_components = [0.5]*self.n_programs
+        weights_mixture_components = np.array([weights_mixture_components]).reshape((self.n_programs, 1))
         # print(weights_mixtures)
-        print(f"weights_mixtures.shape (W) (1 x M): {weights_mixtures.shape}")
+        print(f"weights_mixture_components.shape (W) (1 x M): {weights_mixture_components.shape}")
         print(f"examples.shape (E) (1 x N): {self.E.shape}")
-        print(f"parameter_mixtures.shape (M) (N x M): {self.M.shape}")
+        print(f"parameter_mixture_components.shape (M) (N x M): {self.M.shape}")
 
-        assert weights_mixtures.shape[0] == self.M.shape[1]
+        assert weights_mixture_components.shape[0] == self.M.shape[1]
         assert self.E.shape[1] == self.M.shape[0]
         
         start_time = time.time()
@@ -158,7 +157,7 @@ class OptMixture():
             # self.compute_cross_entropy_error_examples_matrix_jax,
             # obj_and_grad,
             # self.compute_negative_ll_examples,
-            weights_mixtures
+            weights_mixture_components
             # bounds=[(0,100)]*self.n_programs,
             # options={'disp': True}
             # jac=True,
